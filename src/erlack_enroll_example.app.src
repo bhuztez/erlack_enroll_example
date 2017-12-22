@@ -1,0 +1,16 @@
+{application, erlack_enroll_example,
+ [{description, "Erlack enroll example"},
+  {vsn, "0.0.1"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib,
+    ecgi,
+    erlack,
+    erlack_routing,
+    erlack_db
+   ]},
+  {env,[]},
+  {modules, []},
+  {licenses, ["Apache 2.0"]}
+ ]}.
