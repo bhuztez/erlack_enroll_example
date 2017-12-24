@@ -5,7 +5,7 @@
 -compile({parse_transform,
           erlack_db}).
 
--export([start/0, url_reverse/2, handle/0]).
+-export([start/0, url_reverse/2, handle/0, url_dispatch/1]).
 
 -pattern(
    { integer,
@@ -42,23 +42,18 @@ handle() ->
     ecgi:apply_handler(
       lists:foldr(
         fun erlack_middleware:wrap/2,
-        {fun handle_request/0, []},
+        fun handle_request/0,
         [{erlack_reason_phrase, middleware,[]},
-         {erlack_content_length, middleware,[]}])).
+         {erlack_content_length, middleware,[]},
+         {erlack_routing, middleware, [?MODULE, fun not_found/0]}])).
 
 handle_request() ->
-    case url_dispatch(get(<<"REQUEST_URI">>)) of
-        error ->
-            not_found();
-        {Endpoint, Args, _} ->
-            {ok, DB} = connect_db(),
-            try
-                {ok, _, _}
-                    = epgsql:squery(DB, "BEGIN"),
-                handle_request(DB, get(<<"REQUEST_METHOD">>), Endpoint, Args)
-            after
-                epgsql:close(DB)
-            end
+    {ok, DB} = connect_db(),
+    try
+        {ok, _, _} = epgsql:squery(DB, "BEGIN"),
+        handle_request(DB, get(<<"REQUEST_METHOD">>), get(erlack_endpoint), get(erlack_args))
+    after
+        epgsql:close(DB)
     end.
 
 connect_db() ->
